@@ -5,10 +5,10 @@
 
 this is a screenshot showing the program
 
-![alt text](https://github.com/chromium7/mini_paint/blob/image.png?raw=true)
+![alt text](https://github.com/chromium7/mini_paint/blob/master/image.png?raw=true)
 
 this is an image saved from the program
 
-![alt text](https://github.com/chromium7/mini_paint/blob/example.jpg?raw=true)
+![alt text](https://github.com/chromium7/mini_paint/blob/master/example.jpg?raw=true)
 
 cheers :)
