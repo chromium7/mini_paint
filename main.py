@@ -1,7 +1,8 @@
 import tkinter as tk
+import time
 from tkinter import filedialog
 from tkinter.colorchooser import askcolor
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageGrab
 
 
 class mainApp(tk.Tk):
@@ -10,6 +11,7 @@ class mainApp(tk.Tk):
         self.title("MiniPaint")
         width, height = self.winfo_screenwidth(), self.winfo_screenheight()
         self.geometry(f"{width}x{height}+0+0")
+        self.attributes("-fullscreen", True)
 
         self.buttons_frame = tk.Frame(self, height=height, width=200, borderwidth=5, relief=tk.GROOVE)
         self.main_canvas = tk.Canvas(self, height=height, width=width - 200, bg="white", cursor="top_left_arrow")
@@ -28,6 +30,7 @@ class mainApp(tk.Tk):
         self.oval_button = tk.Button(self.buttons_frame, text="Oval", width=200, command=self.oval)
         self.caption_label = tk.Label(self.buttons_frame, text="Caption")
         self.caption_entry = tk.Entry(self.buttons_frame)
+        self.caption_entry.bind("<Return>", self.caption)
         self.fill_button = tk.Button(self.buttons_frame, text="Fill", width=200, command=self.fill)
         self.image_button = tk.Button(self.buttons_frame, text="Image", width=200, command=self.image)
         self.freehand_button = tk.Button(self.buttons_frame, text="Freehand", width=200, command=self.freehand)
@@ -40,6 +43,7 @@ class mainApp(tk.Tk):
         self.line_width_slider = tk.Scale(self.buttons_frame, from_=1, to=19, orient=tk.HORIZONTAL, length=200)
         self.text_size_label = tk.Label(self.buttons_frame, text="Text Size")
         self.text_size_slider = tk.Scale(self.buttons_frame, from_=8, to=24, orient=tk.HORIZONTAL, length=200)
+        self.save_button = tk.Button(self.buttons_frame, text="Save", width=200, command=self.save)
         self.quit_button = tk.Button(self.buttons_frame, text="Quit", width=200, command=quit)
 
         self.clear_button.pack(pady=(50, 3), anchor=tk.W)
@@ -58,6 +62,7 @@ class mainApp(tk.Tk):
         self.line_width_slider.pack(pady=3, anchor=tk.W)
         self.text_size_label.pack(pady=1, anchor=tk.W)
         self.text_size_slider.pack(pady=3, anchor=tk.W)
+        self.save_button.pack(pady=3, anchor=tk.W)
         self.quit_button.pack(pady=3, anchor=tk.W)
 
     def on_move(self, event):
@@ -85,6 +90,11 @@ class mainApp(tk.Tk):
             self.oval = self.main_canvas.create_oval(self.start_x, self.start_y, 1, 1, width=line_width,
                                                      outline=self.line_color, fill=self.fill_color)
 
+        elif func == "caption":
+            self.text = self.main_canvas.create_text(self.start_x, self.start_y, anchor= tk.NW,
+                                                     font= f"Times {self.text_size_slider.get()}", fill=self.line_color,
+                                                     text= self.caption_entry.get())
+
         elif func == "free":
             self.prev = event
 
@@ -93,8 +103,10 @@ class mainApp(tk.Tk):
 
     def clear(self):
         self.main_canvas.delete("all")
-        if self.image_label:
+        try:
             self.image_label.place_forget()
+        except:
+            pass
 
     def drawline(self, event):
         current_x, current_y = event.x, event.y
@@ -126,8 +138,14 @@ class mainApp(tk.Tk):
         self.main_canvas.bind("<B1-Motion>", self.drawoval)
         self.main_canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-    def caption(self):
-        pass
+    def drawcaption(self, event):
+        current_x, current_y = event.x, event.y
+        self.main_canvas.coords(current_x, current_y)
+
+    def caption(self, event):
+        self.main_canvas.bind("<ButtonPress-1>", lambda key: self.on_button_press(key, func="caption"))
+        self.main_canvas.bind("<B1-Motion>", self.drawcaption)
+        self.main_canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
     def fill(self):
         if self.fill_state == True:
@@ -155,7 +173,7 @@ class mainApp(tk.Tk):
         current_x, current_y = event.x, event.y
         line_width = self.line_width_slider.get()
         self.main_canvas.create_line(self.prev.x, self.prev.y, current_x, current_y, fill=self.line_color,
-                                     width=line_width)
+                                     width=line_width, smooth="true")
         self.prev = event
 
     def freehand(self):
@@ -186,6 +204,25 @@ class mainApp(tk.Tk):
         color = askcolor()[1]
         self.fill_color_button.configure(bg=color)
         self.fill_color = color
+
+    def save(self):
+        def save2():
+            title = save_as_entry.get()
+            save_as_win.destroy()
+            time.sleep(0.7)
+            width, height = self.main_canvas.winfo_width(), self.main_canvas.winfo_height()
+            x, y = self.winfo_rootx() + self.main_canvas.winfo_x(), self.winfo_rooty() + self.main_canvas.winfo_y()
+            xx, yy = x + width, y + height
+            ImageGrab.grab(bbox=(x, y, xx, yy)).save(f"{title}.jpg")
+
+        save_as_win = tk.Toplevel()
+        save_as_win.title("Save As")
+        save_as_win.resizable(False, False)
+        save_as_entry = tk.Entry(save_as_win)
+        save_as_entry.bind("<Return>", lambda event: save2())
+        save_as_button = tk.Button(save_as_win, text= "Save!", command= save2)
+        save_as_entry.pack()
+        save_as_button.pack()
 
 
 def main():
